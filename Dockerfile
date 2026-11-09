@@ -5,12 +5,12 @@ WORKDIR /app
 COPY . .
 # Compilamos solo el módulo que necesitamos (usando -pl y -am)
 ARG MODULE_NAME
-RUN mvn clean package -DskipTests -pl ${MODULE_NAME} -am
+RUN mvn clean package -DskipTests -pl $MODULE_NAME -am
 
 # Etapa 2: Ejecución
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 ARG MODULE_NAME
 # Copiamos el jar generado
-COPY --from=build /app/${MODULE_NAME}/target/*.jar app.jar
+COPY --from=build /app/$MODULE_NAME/target/*.jar app.jar
 ENTRYPOINT ["java", "-jar", "app.jar"]
