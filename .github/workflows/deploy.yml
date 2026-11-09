@@ -25,14 +25,16 @@ jobs:
       - name: Build y Push - Document Service
         uses: docker/build-push-action@v5
         with:
-          context: ./document-service
+          context: .
+          file: ./Dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/document-service:latest
 
       - name: Build y Push - Storage Service
         uses: docker/build-push-action@v5
         with:
-          context: ./storage-service
+          context: .
+          file: ./Dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/storage-service:latest
 
