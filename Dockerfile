@@ -1,16 +1,20 @@
-# Etapa 1: Compilación (se construye desde la raíz)
+# Etapa 1: Compilación
 FROM maven:3.9.6-eclipse-temurin-17 AS build
 WORKDIR /app
-# Copiamos todo el proyecto
 COPY . .
-# Compilamos solo el módulo que necesitamos (usando -pl y -am)
+
+# Declaramos el argumento
 ARG MODULE_NAME
-RUN mvn clean package -DskipTests -pl $MODULE_NAME -am
+# Usamos comillas para asegurar que el shell no lo interprete mal
+RUN mvn clean package -DskipTests -pl "$MODULE_NAME" -am
 
 # Etapa 2: Ejecución
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
+
+# Volvemos a declarar el ARG para la segunda etapa
 ARG MODULE_NAME
-# Copiamos el jar generado
-COPY --from=build /app/$MODULE_NAME/target/*.jar app.jar
+# Copiamos el jar generado usando el argumento
+COPY --from=build "/app/${MODULE_NAME}/target/*.jar" app.jar
+
 ENTRYPOINT ["java", "-jar", "app.jar"]
