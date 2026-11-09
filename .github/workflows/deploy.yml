@@ -43,18 +43,6 @@ jobs:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout del repositorio
-        uses: actions/checkout@v4
-
-      - name: Copiar docker-compose.yml a la EC2
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.USER_SERVER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          source: "docker-compose.yml"
-          target: "/home/ubuntu/app"
-
       - name: Ejecutar Docker Compose en EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -64,47 +52,34 @@ jobs:
           script: |
             mkdir -p /home/ubuntu/app
             cd /home/ubuntu/app
+            
+            echo "version: '3.8'" > docker-compose.yml
+            echo "services:" >> docker-compose.yml
+            echo "  storage-service:" >> docker-compose.yml
+            echo "    image: ${{ secrets.DOCKERHUB_USERNAME }}/storage-service:latest" >> docker-compose.yml
+            echo "    container_name: storage-service" >> docker-compose.yml
+            echo "    ports:" >> docker-compose.yml
+            echo "      - '8081:8081'" >> docker-compose.yml
+            echo "    volumes:" >> docker-compose.yml
+            echo "      - /mnt/efs:/mnt/efs" >> docker-compose.yml
+            echo "    environment:" >> docker-compose.yml
+            echo "      - AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> docker-compose.yml
+            echo "      - AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> docker-compose.yml
+            echo "      - AWS_SESSION_TOKEN=${{ secrets.AWS_SESSION_TOKEN }}" >> docker-compose.yml
+            echo "      - AWS_REGION=${{ secrets.AWS_REGION }}" >> docker-compose.yml
+            echo "      - S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }}" >> docker-compose.yml
+            echo "    user: root" >> docker-compose.yml
+            echo "  document-service:" >> docker-compose.yml
+            echo "    image: ${{ secrets.DOCKERHUB_USERNAME }}/document-service:latest" >> docker-compose.yml
+            echo "    container_name: document-service" >> docker-compose.yml
+            echo "    ports:" >> docker-compose.yml
+            echo "      - '8080:8080'" >> docker-compose.yml
+            echo "    environment:" >> docker-compose.yml
+            echo "      - STORAGE_SERVICE_URL=http://storage-service:8081" >> docker-compose.yml
+            echo "    depends_on:" >> docker-compose.yml
+            echo "      - storage-service" >> docker-compose.yml
 
-      # 2. Crear el archivo docker-compose.yml desde el script
-            cat << 'EOF' > docker-compose.yml
-            version: '3.8'
-            services:
-              storage-service:
-                image: ${DOCKERHUB_USERNAME}/storage-service:latest
-                container_name: storage-service
-                ports:
-                  - "8081:8081"
-                volumes:
-                  - /mnt/efs:/mnt/efs
-                environment:
-                  - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-                  - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-                  - AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}
-                  - AWS_REGION=${AWS_REGION}
-                  - S3_BUCKET_NAME=${S3_BUCKET_NAME}
-                user: root
-              document-service:
-                image: ${DOCKERHUB_USERNAME}/document-service:latest
-                container_name: document-service
-                ports:
-                  - "8080:8080"
-                environment:
-                  - STORAGE_SERVICE_URL=http://storage-service:8081
-                depends_on:
-                  - storage-service
-            EOF
-
-    # 3. Crear el .env (OJO: el cat usa 'EOF' sin comillas para expandir las variables)
-              cat << EOF > .env
-              DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
-              AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
-              AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-              AWS_SESSION_TOKEN=${{ secrets.AWS_SESSION_TOKEN }}
-              AWS_REGION=${{ secrets.AWS_REGION }}
-              S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }}
-            EOF
-
-    # 4. Limpiar contenedores viejos y levantar los nuevos
+            # Limpiamos contenedores viejos y levantamos los nuevos
             docker rm -f document-service storage-service || true
             docker compose pull
             docker compose up -d --remove-orphans
