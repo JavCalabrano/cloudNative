@@ -14,7 +14,7 @@ services:
       - AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}
       - AWS_REGION=${AWS_REGION}
       - S3_BUCKET_NAME=${S3_BUCKET_NAME}
-    user: root  # Para evitar problemas de permisos con EFS
+    user: root
 
   document-service:
     image: ${DOCKERHUB_USERNAME}/document-service:latest
@@ -22,6 +22,6 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - STORAGE_SERVICE_URL=http://storage-service:8081 # Se comunican por la red interna de docker-compose
+      - STORAGE_SERVICE_URL=http://storage-service:8081
     depends_on:
       - storage-service

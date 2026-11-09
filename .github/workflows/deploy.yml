@@ -43,7 +43,19 @@ jobs:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
-      - name: Ejecutar comandos en EC2 vía SSH
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Copiar docker-compose.yml a la EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.USER_SERVER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "docker-compose.yml"
+          target: "/home/ubuntu/app"
+
+      - name: Ejecutar Docker Compose en EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -53,31 +65,24 @@ jobs:
             # 1. Login en DockerHub
             echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
             
-            # 2. Descargar las últimas imágenes
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/document-service:latest
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/storage-service:latest
+            # 2. Moverse al directorio donde se copió el compose
+            cd /home/ubuntu/app
             
-            # 3. Detener y eliminar contenedores anteriores (ignora errores si no existen)
-            docker stop storage-service document-service || true
-            docker rm storage-service document-service || true
+            # 3. Crear el archivo .env con las variables de entorno
+            cat << EOF > .env
+            DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
+            AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            AWS_SESSION_TOKEN=${{ secrets.AWS_SESSION_TOKEN }}
+            AWS_REGION=${{ secrets.AWS_REGION }}
+            S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }}
+            EOF
             
-            # 4. Iniciar storage-service (inyectando credenciales de AWS y config de EFS)
-            docker run -d --name storage-service \
-              --user root \
-              -p 8081:8081 \
-              -v /mnt/efs:/mnt/efs \
-              -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" \
-              -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" \
-              -e AWS_SESSION_TOKEN="${{ secrets.AWS_SESSION_TOKEN }}" \
-              -e AWS_REGION="${{ secrets.AWS_REGION }}" \
-              -e S3_BUCKET_NAME="${{ secrets.S3_BUCKET_NAME }}" \
-              ${{ secrets.DOCKERHUB_USERNAME }}/storage-service:latest
+            # 4. Descargar las imágenes más recientes
+            docker compose pull
             
-            # 5. Iniciar document-service (conectado al storage)
-            docker run -d --name document-service \
-              -p 8080:8080 \
-              -e STORAGE_SERVICE_URL="http://localhost:8081" \
-              ${{ secrets.DOCKERHUB_USERNAME }}/document-service:latest
+            # 5. Levantar los servicios (--remove-orphans limpia contenedores viejos)
+            docker compose up -d --remove-orphans
             
-            # 6. Limpieza de imágenes no usadas (opcional)
+            # 6. Limpieza
             docker image prune -f

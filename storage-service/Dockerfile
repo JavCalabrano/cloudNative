@@ -1,8 +1,6 @@
 FROM maven:3.9.6-eclipse-temurin-17 AS build
 WORKDIR /app
-# Copiamos todo el proyecto
 COPY . .
-# Compilamos solo storage-service
 RUN mvn clean package -pl storage-service -am -DskipTests
 
 FROM eclipse-temurin:17-jre-alpine
