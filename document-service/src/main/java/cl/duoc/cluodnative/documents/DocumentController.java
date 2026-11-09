@@ -1,4 +1,4 @@
-package com.duoc.documentservice;
+package cl.duoc.cluodnative.documents;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;

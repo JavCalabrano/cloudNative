@@ -1,10 +1,10 @@
-package com.duoc.documentservice;
+package cl.duoc.cloudnative.storage;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class DocumentServiceApplicationTests {
+class StorageServiceApplicationTests {
 
     @Test
     void contextLoads() {

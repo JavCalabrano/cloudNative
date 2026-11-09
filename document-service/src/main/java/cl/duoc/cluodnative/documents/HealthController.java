@@ -1,4 +1,4 @@
-package com.duoc.documentservice;
+package cl.duoc.cluodnative.documents;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 @RestController public class HealthController {

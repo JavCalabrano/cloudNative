@@ -1,4 +1,4 @@
-package com.duoc.documentservice;
+package cl.duoc.cluodnative.documents;
 import org.apache.pdfbox.pdmodel.*;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.*;

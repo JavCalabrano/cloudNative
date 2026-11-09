@@ -1,4 +1,4 @@
-package com.duoc.storageservice;
+package cl.duoc.cloudnative.storage;
 
 import java.net.URI;
 
