@@ -41,7 +41,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>cl.duoc.cloudnative.storage.StorageApplication</mainClass>
+                    <mainClass>cl.duoc.cloudnative.storage.StorageServiceApplication</mainClass>
                 </configuration>
             </plugin>
         </plugins>
