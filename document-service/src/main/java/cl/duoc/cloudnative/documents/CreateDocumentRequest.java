@@ -1,4 +1,4 @@
-package cl.duoc.cluodnative.documents;
+package cl.duoc.cloudnative.documents;
 import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;

@@ -1,4 +1,4 @@
-package cl.duoc.cluodnative.documents;
+package cl.duoc.cloudnative.documents;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
