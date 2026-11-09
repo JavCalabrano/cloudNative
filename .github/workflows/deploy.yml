@@ -26,7 +26,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile
+          file: ./document-service/Dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/document-service:latest
 
@@ -34,7 +34,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile
+          file: ./storage-service/Dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/storage-service:latest
 

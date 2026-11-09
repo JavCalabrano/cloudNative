@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  storage-service:
+    image: ${DOCKERHUB_USERNAME}/storage-service:latest
+    container_name: storage-service
+    ports:
+      - "8081:8081"
+    volumes:
+      - /mnt/efs:/mnt/efs
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}
+      - AWS_REGION=${AWS_REGION}
+      - S3_BUCKET_NAME=${S3_BUCKET_NAME}
+    user: root  # Para evitar problemas de permisos con EFS
+
+  document-service:
+    image: ${DOCKERHUB_USERNAME}/document-service:latest
+    container_name: document-service
+    ports:
+      - "8080:8080"
+    environment:
+      - STORAGE_SERVICE_URL=http://storage-service:8081 # Se comunican por la red interna de docker-compose
+    depends_on:
+      - storage-service
