@@ -28,8 +28,9 @@ jobs:
           context: .
           file: ./document-service/Dockerfile
           push: true
-          no-cache: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/document-service:latest
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/document-service:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/document-service:${{ github.run_id }}
 
       - name: Build y Push - Storage Service
         uses: docker/build-push-action@v5
@@ -37,8 +38,9 @@ jobs:
           context: .
           file: ./storage-service/Dockerfile
           push: true
-          no-cache: true1
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/storage-service:latest
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/storage-service:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/storage-service:${{ github.run_id }}
 
   deploy:
     name: Desplegar en EC2
