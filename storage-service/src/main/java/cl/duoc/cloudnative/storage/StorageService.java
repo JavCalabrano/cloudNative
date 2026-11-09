@@ -6,6 +6,8 @@ import java.nio.file.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -40,7 +42,11 @@ public class StorageService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Se requiere PDF");
         }
 
-        String name = "documento-" + UUID.randomUUID() + ".pdf";
+        // Limpiamos el nombre del cliente por si tiene espacios o tildes
+        String clienteLimpio = clientId.replaceAll("[^a-zA-Z0-9]", "_");
+        // Generamos un nombre elegante: Factura_cli-001_2026-11-09_a1b2c3d4.pdf
+        String uuidCorto = UUID.randomUUID().toString().substring(0, 8);
+        String name = "Factura_" + clienteLimpio + "_" + date.toString() + "_" + uuidCorto + ".pdf";
         String yyyy = String.valueOf(date.getYear());
         String mm = String.format("%02d", date.getMonthValue());
         String dd = String.format("%02d", date.getDayOfMonth());
@@ -86,7 +92,7 @@ public class StorageService {
 
     public byte[] load(String clientId, LocalDate date, String filename) throws IOException {
         checkId(clientId);
-        if (!filename.matches("documento-[a-f0-9-]{36}\\.pdf")) {
+        if (!filename.matches("Factura_[a-zA-Z0-9_]+_\\d{4}-\\d{2}-\\d{2}_[a-f0-9]{8}\\.pdf")) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nombre inválido");
         }
 
@@ -122,5 +128,32 @@ public class StorageService {
         if (!id.matches("[A-Za-z0-9_-]{1,50}")) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cliente inválido");
         }
+    }
+
+    public List<Map<String, String>> getHistory(String clientId) {
+        checkId(clientId);
+        String prefix = "clientes/" + clientId + "/";
+
+        // Buscamos todos los objetos en S3 que empiecen con ese prefijo
+        ListObjectsV2Request request = ListObjectsV2Request.builder()
+                .bucket(bucket)
+                .prefix(prefix)
+                .build();
+
+        ListObjectsV2Response response = s3.listObjectsV2(request);
+
+        // Mapeamos la respuesta a un JSON amigable para Postman
+        return response.contents().stream().map(s3Object -> {
+            String key = s3Object.key();
+            // Extraemos solo el nombre del archivo de la ruta completa
+            String filename = key.substring(key.lastIndexOf("/") + 1);
+
+            return Map.of(
+                    "filename", filename,
+                    "s3Key", key,
+                    "sizeBytes", String.valueOf(s3Object.size()),
+                    "lastModified", s3Object.lastModified().toString()
+            );
+        }).collect(Collectors.toList());
     }
 }

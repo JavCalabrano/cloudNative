@@ -8,6 +8,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestClient;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 @RestController @RequestMapping("/api/documents")
@@ -32,5 +33,12 @@ public class DocumentController {
                 .retrieve().body(byte[].class);
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF)
                 .header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename=\""+filename+"\"").body(file);
+    }
+
+    @GetMapping("/history/{clientId}")
+    public ResponseEntity<List> getHistory(@PathVariable String clientId) {
+        List result = storage.get().uri("/internal/storage/history/{clientId}", clientId)
+                .retrieve().body(List.class);
+        return ResponseEntity.ok(result);
     }
 }

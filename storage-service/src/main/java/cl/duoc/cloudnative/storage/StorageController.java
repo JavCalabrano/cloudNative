@@ -2,6 +2,7 @@ package cl.duoc.cloudnative.storage;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.*;
@@ -36,5 +37,10 @@ public class StorageController {
                 .contentType(MediaType.APPLICATION_PDF)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                 .body(data);
+    }
+
+    @GetMapping("/history/{clientId}")
+    public List<Map<String, String>> history(@PathVariable String clientId) {
+        return service.getHistory(clientId);
     }
 }
