@@ -62,27 +62,50 @@ jobs:
           username: ${{ secrets.USER_SERVER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # 1. Login en DockerHub
-            echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
-            
-            # 2. Moverse al directorio donde se copió el compose
+            mkdir -p /home/ubuntu/app
             cd /home/ubuntu/app
-            
-            # 3. Crear el archivo .env con las variables de entorno
-            cat << EOF > .env
-            DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
-            AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
-            AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            AWS_SESSION_TOKEN=${{ secrets.AWS_SESSION_TOKEN }}
-            AWS_REGION=${{ secrets.AWS_REGION }}
-            S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }}
+
+      # 2. Crear el archivo docker-compose.yml desde el script
+            cat << 'EOF' > docker-compose.yml
+            version: '3.8'
+            services:
+              storage-service:
+                image: ${DOCKERHUB_USERNAME}/storage-service:latest
+                container_name: storage-service
+                ports:
+                  - "8081:8081"
+                volumes:
+                  - /mnt/efs:/mnt/efs
+                environment:
+                  - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+                  - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+                  - AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}
+                  - AWS_REGION=${AWS_REGION}
+                  - S3_BUCKET_NAME=${S3_BUCKET_NAME}
+                user: root
+              document-service:
+                image: ${DOCKERHUB_USERNAME}/document-service:latest
+                container_name: document-service
+                ports:
+                  - "8080:8080"
+                environment:
+                  - STORAGE_SERVICE_URL=http://storage-service:8081
+                depends_on:
+                  - storage-service
             EOF
-            
-            # 4. Descargar las imágenes más recientes
+
+    # 3. Crear el .env (OJO: el cat usa 'EOF' sin comillas para expandir las variables)
+              cat << EOF > .env
+              DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
+              AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+              AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+              AWS_SESSION_TOKEN=${{ secrets.AWS_SESSION_TOKEN }}
+              AWS_REGION=${{ secrets.AWS_REGION }}
+              S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }}
+            EOF
+
+    # 4. Limpiar contenedores viejos y levantar los nuevos
+            docker rm -f document-service storage-service || true
             docker compose pull
-            
-            # 5. Levantar los servicios (--remove-orphans limpia contenedores viejos)
             docker compose up -d --remove-orphans
-            
-            # 6. Limpieza
             docker image prune -f
