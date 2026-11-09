@@ -56,7 +56,8 @@ jobs:
           script: |
             mkdir -p /home/ubuntu/app
             cd /home/ubuntu/app
-            
+
+            # 1. Crear el docker-compose.yml
             echo "version: '3.8'" > docker-compose.yml
             echo "services:" >> docker-compose.yml
             echo "  storage-service:" >> docker-compose.yml
@@ -67,11 +68,11 @@ jobs:
             echo "    volumes:" >> docker-compose.yml
             echo "      - /mnt/efs:/mnt/efs" >> docker-compose.yml
             echo "    environment:" >> docker-compose.yml
-            echo "      - AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> docker-compose.yml
-            echo "      - AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> docker-compose.yml
-            echo "      - AWS_SESSION_TOKEN=${{ secrets.AWS_SESSION_TOKEN }}" >> docker-compose.yml
-            echo "      - AWS_REGION=${{ secrets.AWS_REGION }}" >> docker-compose.yml
-            echo "      - S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }}" >> docker-compose.yml
+            echo "      - AWS_ACCESS_KEY_ID=\${AWS_ACCESS_KEY_ID}" >> docker-compose.yml
+            echo "      - AWS_SECRET_ACCESS_KEY=\${AWS_SECRET_ACCESS_KEY}" >> docker-compose.yml
+            echo "      - AWS_SESSION_TOKEN=\${AWS_SESSION_TOKEN}" >> docker-compose.yml
+            echo "      - AWS_REGION=\${AWS_REGION}" >> docker-compose.yml
+            echo "      - S3_BUCKET_NAME=\${S3_BUCKET_NAME}" >> docker-compose.yml
             echo "    user: root" >> docker-compose.yml
             echo "  document-service:" >> docker-compose.yml
             echo "    image: ${{ secrets.DOCKERHUB_USERNAME }}/document-service:latest" >> docker-compose.yml
@@ -83,8 +84,16 @@ jobs:
             echo "    depends_on:" >> docker-compose.yml
             echo "      - storage-service" >> docker-compose.yml
 
-            # Limpiamos contenedores viejos y levantamos los nuevos
-            docker rm -f document-service storage-service || true
+            # 2. Crear el archivo .env con los secretos (¡ESTO FALTABA!)
+            echo "DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}" > .env
+            echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> .env
+            echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> .env
+            echo "AWS_SESSION_TOKEN=${{ secrets.AWS_SESSION_TOKEN }}" >> .env
+            echo "AWS_REGION=${{ secrets.AWS_REGION }}" >> .env
+            echo "S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }}" >> .env
+
+            # 3. Limpiar y levantar contenedores
+            docker compose down
             docker compose pull
             docker compose up -d --remove-orphans
             docker image prune -f
