@@ -1,9 +1,9 @@
 FROM maven:3.9.6-eclipse-temurin-17 AS build
 WORKDIR /app
-COPY pom.xml .
-COPY storage-service/pom.xml ./storage-service/
-COPY storage-service/src ./storage-service/src
-RUN mvn -f pom.xml clean package -pl storage-service -am -DskipTests
+# Copiamos todo el proyecto
+COPY . .
+# Compilamos solo storage-service
+RUN mvn clean package -pl storage-service -am -DskipTests
 
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
