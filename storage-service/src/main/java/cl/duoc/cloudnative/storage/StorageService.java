@@ -23,8 +23,8 @@ public class StorageService {
     private final Path efsRoot;
 
     public StorageService(S3Client s3,
-                          @Value("${storage.s3.bucket}") String bucket,
-                          @Value("${storage.efs.path:/mnt/efs}") String efsPath) {
+                          @Value("${S3_BUCKET_NAME:mi-bucket-documentos}") String bucket,
+                          @Value("${STORAGE_EFS_PATH:/mnt/efs}") String efsPath) {
         this.s3 = s3;
         this.bucket = bucket;
         this.efsRoot = Path.of(efsPath).toAbsolutePath().normalize();
