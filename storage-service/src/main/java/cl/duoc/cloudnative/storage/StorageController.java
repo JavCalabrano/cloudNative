@@ -32,9 +32,12 @@ public class StorageController {
             @PathVariable String clientId,
             @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @PathVariable String filename) throws IOException {
+
         byte[] data = service.load(clientId, date, filename);
+
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_PDF)
+                .contentLength(data.length) // <-- ¡ESTO ES LA CLAVE! Le dice a Postman cuánto va a pesar
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                 .body(data);
     }

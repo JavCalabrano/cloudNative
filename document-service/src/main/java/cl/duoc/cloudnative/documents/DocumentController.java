@@ -27,12 +27,18 @@ public class DocumentController {
                 .body(form).retrieve().body(Map.class);
         return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
-    @GetMapping("/{clientId}/{date}/{filename:.+}") public ResponseEntity<byte[]> download(
-            @PathVariable String clientId,@PathVariable String date,@PathVariable String filename) {
-        byte[] file=storage.get().uri(b->b.path("/internal/storage/{clientId}/{date}/{filename}").build(clientId,date,filename))
+    @GetMapping("/{clientId}/{date}/{filename:.+}")
+    public ResponseEntity<byte[]> download(
+            @PathVariable String clientId, @PathVariable String date, @PathVariable String filename) {
+        byte[] file = storage.get().uri(b -> b.path("/internal/storage/{clientId}/{date}/{filename}")
+                        .build(clientId, date, filename))
                 .retrieve().body(byte[].class);
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF)
-                .header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename=\""+filename+"\"").body(file);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .contentLength(file.length) // <-- Agrega esto aquí también
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .body(file);
     }
 
     @GetMapping("/history/{clientId}")
