@@ -67,7 +67,7 @@ public class StorageService {
             System.out.println("📄 [EFS] Guardando archivo en: " + efsFile.toString());
             System.out.println("☁️ [S3] Subiendo archivo a la nube con la key: " + s3Key);
 
-            // 2) Subir a S3 desde EFS
+            // 2) S3 desde EFS
             s3.putObject(
                     PutObjectRequest.builder()
                             .bucket(bucket)
