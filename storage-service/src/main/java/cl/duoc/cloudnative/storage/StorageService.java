@@ -63,6 +63,10 @@ public class StorageService {
             // 1) Escribir en EFS (persistente)
             Files.copy(in, efsFile, StandardCopyOption.REPLACE_EXISTING);
 
+            // Agrega esto justo antes del s3.putObject
+            System.out.println("📄 [EFS] Guardando archivo en: " + efsFile.toString());
+            System.out.println("☁️ [S3] Subiendo archivo a la nube con la key: " + s3Key);
+
             // 2) Subir a S3 desde EFS
             s3.putObject(
                     PutObjectRequest.builder()
